@@ -47,7 +47,7 @@ int browseFile(Person subjects[], int index, char folder[], FileSet fileSelected
 void writeLine(FileSet file, bool lastLine);
 
 void main(void) {
-	/*Person subjects[NB_SUBJECTS];
+	Person subjects[NB_SUBJECTS];
 
 	char paths[NB_FOLDERS_MAX][LG_PATHS] = {
 		"dws_1/sub_",
@@ -71,7 +71,7 @@ void main(void) {
 	createFilesSet("testSet.csv");
 	createListingSubjects(subjects);
 	browseFolder(paths, subjects);
-	*/
+	
 
 	int estimatedClasses[] = { 1, 3, 4, 2, 5, 6, 2, 1};
 	int realClassesV[] = { 1, 3, 4, 2, 5, 6, 2, 1};
