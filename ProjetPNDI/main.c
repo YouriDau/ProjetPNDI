@@ -13,9 +13,11 @@ void writeLine(FileSet file, bool lastLine);
 // PHASE 3
 void createFileModel(char fileName[]);
 void readData(char file[], Model model[]);
+void insertData(char file[], Model model[]);
 
 void main(void) {
 	Person subjects[NB_SUBJECTS];
+	Model model[NB_CLASSES];
 
 	char paths[NB_FOLDERS_MAX][LG_PATHS] = {
 		"dws_1/sub_",
@@ -51,6 +53,8 @@ void main(void) {
 
 	// PHASE 3
 	createFileModel("fiModel.csv");
+	readData("trainSet.csv", model);
+	insertData("fiModel.csv", model);
 }
 
 void createFilesSet(char fileName[]) {
@@ -193,7 +197,7 @@ int browseFile(Person subjects[], int index, char folder[], FileSet fileSelected
 
 				token = strtok(line, ",");
 				while (token != NULL) {
-					sscanf(token, "%lf", &infos[iInfo]);
+					sscanf(token, "%.5lf", &infos[iInfo]);
 
 					token = strtok(NULL, ",");
 					iInfo++;
@@ -250,6 +254,8 @@ void writeLine(FileSet file, bool firstLine) {
 	}
 }
 
+//phase 3
+
 void createFileModel(char fileName[]) {
 	FILE* fiFile;
 
@@ -275,7 +281,8 @@ void readData(char file[], Model model[]) {
 	fopen_s(&fiSet, file, "r");
 	if (fiSet == NULL) {
 		printf("Error opening of file!");
-	} else {
+	}
+	else {
 		char line[200];
 		int iMovement;
 		int iTotalColumn;
@@ -297,16 +304,17 @@ void readData(char file[], Model model[]) {
 				while (iTotalColumn < NB_DATA) {
 					model[iMovement].averages[iTotalColumn] += (totalColumns[iTotalColumn] / nbLines) * 100;
 					totalAverages += model[iMovement].averages[iTotalColumn];
-					model[iMovement].standardDeviation[iTotalColumn] = sqrt((totalColumnsSquare[iTotalColumn]/nbLines)
-																		- pow(model[iMovement].averages[iTotalColumn], 2));
+					model[iMovement].standardDeviation[iTotalColumn] = sqrt((totalColumnsSquare[iTotalColumn] / nbLines)
+						- pow(model[iMovement].averages[iTotalColumn], 2));
 
 					iTotalColumn++;
 				}
-				model[iMovement].average = totalValues / (nbLines * NB_DATA);
+				model[iMovement].average = totalValues / ((double)nbLines * NB_DATA);
 
 				totalValues = 0;
 				iMovement++;
-			} else {
+			}
+			else {
 				iTotalColumn = 0;
 				while (iTotalColumn < NB_DATA) {
 					totalColumns[iTotalColumn] += line[iColumn];
@@ -318,6 +326,58 @@ void readData(char file[], Model model[]) {
 				}
 				iTotalColumn = 0;
 			}
+		}
+
+		fclose(&fiSet);
+	}
+}
+
+//fonction qui à pour but de transférer les données du tableau model et de les écrire dans le fichier
+void insertData(char file[], Model model[]) {
+	FILE* fiSet;
+
+	fopen(&fiSet, file, "r");
+	if (fiSet == NULL) {
+		printf("Error opening of file!");
+	}
+	else {
+		int iMovement = 0;
+		int nbMovementMax = 6;
+		int nbLineByMovementMax = 3;
+		char line[200];
+
+		fgets(line, sizeof(line), fiSet); //on évitre la première ligne
+
+		while (iMovement < nbMovementMax)
+		{
+			int iMovementLine = 0;
+
+			model[iMovement].movement[0] = MOVEMENTS[iMovement];
+			while (iMovementLine < nbLineByMovementMax)
+			{
+				int i = 0;
+
+				fprintf(fiSet, "%s,", model[iMovementLine].movement);
+
+				//affiche en fonction de la ligne
+				switch (iMovementLine)
+				{
+				case 0:
+					while (i < NB_DATA)
+					{
+						fprintf(fiSet, "%.5lf,", model[iMovementLine].averages[i]);
+					}
+				case 1:
+					while (i < NB_DATA) {
+						fprintf(fiSet, "%.5lf,", model[iMovementLine].standardDeviation[i]);
+					}
+				case 2:
+					fprintf(fiSet, "%.5lf,", model[iMovementLine].average);
+				}
+
+				iMovementLine++;
+			}
+			iMovement++;
 		}
 
 		fclose(&fiSet);

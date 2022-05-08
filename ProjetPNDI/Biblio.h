@@ -16,6 +16,8 @@
 #define LG_MOVEMENT 11
 #define LG_FOLER_TYPE 13
 
+char MOVEMENTS[NB_CLASSES][LG_MOVEMENT] = { "downstairs", "jogging", "sitDown", "standUp", "upstairs", "walking" };
+
 // PHASE 1
 typedef struct person Person;
 struct person {
