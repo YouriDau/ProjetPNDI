@@ -4,47 +4,15 @@
 
 // PROJET DE YOURI DAUTREBANDE, BRYCE MOLITOR
 
-#define NB_VACC_MAX 1000
-#define NB_FOLDERS_MAX 15
-#define NB_FILES_TEST 3
-#define NB_SUBJECTS 24
-
-#define LG_PATHS 20
-
-#define LG_MOVEMENT 11
-#define LG_FOLER_TYPE 13
-
-typedef struct person Person;
-struct person {
-	int code;
-	int weight;
-	int height;
-	int age;
-	int gender; // 0 femme | 1 homme
-};
-
-typedef struct fileSet FileSet;
-struct fileSet {
-	char type[LG_FOLER_TYPE]; // Train, Test
-	char movement[LG_MOVEMENT];
-	int gender;
-	int index;
-	double vacc;
-};
-
-typedef struct data Data;
-struct data {
-	double x;
-	double y;
-	double z;
-};
-
-
+// PHASE 1
 void createFilesSet(char fileName[]);
 void createListingSubjects(Person subjects[]);
 void browseFolder(char path[][LG_PATHS], Person subjects[]);
 int browseFile(Person subjects[], int index, char folder[], FileSet fileSelected);
 void writeLine(FileSet file, bool lastLine);
+// PHASE 3
+void createFileModel(char fileName[]);
+void readData(char file[], Model model[]);
 
 void main(void) {
 	Person subjects[NB_SUBJECTS];
@@ -67,18 +35,22 @@ void main(void) {
 		"wlk_15/sub_",
 	};
 
-	createFilesSet("trainSet.csv");
-	createFilesSet("testSet.csv");
-	createListingSubjects(subjects);
-	browseFolder(paths, subjects);
-	
+	// PHASE 1
+	//createFilesSet("trainSet.csv");
+	//createFilesSet("testSet.csv");
+	//createListingSubjects(subjects);
+	//browseFolder(paths, subjects);
 
+	// PHASE 2
 	int estimatedClasses[] = { 1, 3, 4, 2, 5, 6, 2, 1};
 	int realClassesV[] = { 1, 3, 4, 2, 5, 6, 2, 1};
 	int realClasses[] = { 1, 4, 5, 2, 3, 6, 1, 1 };
-	displayResultsByClass(realClasses, estimatedClasses, 8);
-	displayAccuracy(realClasses, estimatedClasses, 8);
-	displayConfusionMatrix(realClasses, estimatedClasses, 8);
+	//displayResultsByClass(realClasses, estimatedClasses, 8);
+	//displayAccuracy(realClasses, estimatedClasses, 8);
+	//displayConfusionMatrix(realClasses, estimatedClasses, 8);
+
+	// PHASE 3
+	createFileModel("fiModel.csv");
 }
 
 void createFilesSet(char fileName[]) {
@@ -93,7 +65,7 @@ void createFilesSet(char fileName[]) {
 		fprintf(fiFile, "Index,");
 		fprintf(fiFile, "Gender,");
 
-		for (int i = 0; i < NB_VACC_MAX - 1; i++) {
+		for (int i = 0; i < NB_DATA - 1; i++) {
 			fprintf(fiFile, "Vacc,");
 		}
 		fprintf(fiFile, "Vacc\n");
@@ -209,16 +181,14 @@ int browseFile(Person subjects[], int index, char folder[], FileSet fileSelected
 		else {
 			char line[800];
 			double infos[13];
+			double racine;
 			char* token;
 			int iLine = 0;
 			int iInfo;
 			Data data;
-			double racine;
-			double squaresSum;
 
 			fgets(line, sizeof(line), fiMovement);
-			fgets(line, sizeof(line), fiMovement);
-			while (!feof(fiMovement) && iLine < NB_VACC_MAX) {
+			while (fgets(line, sizeof(line), fiMovement) && iLine < NB_DATA) {
 				iInfo = 0;
 
 				token = strtok(line, ",");
@@ -233,14 +203,12 @@ int browseFile(Person subjects[], int index, char folder[], FileSet fileSelected
 				data.y = infos[11];
 				data.z = infos[12];
 
-				squaresSum = pow(data.x, 2) + pow(data.y, 2) + pow(data.z, 2);
-				racine = sqrt(squaresSum);
-				fileSelected.vacc = racine;
+				fileSelected.vacc = sqrt(pow(data.x, 2) + pow(data.y, 2) + pow(data.z, 2));
+				//fileSelected.vacc = racine;
 
 				writeLine(fileSelected, iLine == 0);
 
 				iLine++;
-				fgets(line, sizeof(line), fiMovement);
 			}
 
 			FILE* fiFile;
@@ -279,5 +247,79 @@ void writeLine(FileSet file, bool firstLine) {
 		fprintf(fiFile, "%.5lf,", file.vacc);
 
 		fclose(fiFile);
+	}
+}
+
+void createFileModel(char fileName[]) {
+	FILE* fiFile;
+
+	fopen_s(&fiFile, fileName, "w+");
+	if (fiFile == NULL) {
+		puts("Error opening of file!");
+	}
+	else {
+		fprintf(fiFile, "Movement,");
+
+		for (int i = 0; i < NB_DATA - 1; i++) {
+			fprintf(fiFile, "Vacc,");
+		}
+		fprintf(fiFile, "Vacc\n");
+
+		fclose(fiFile);
+	}
+}
+
+void readData(char file[], Model model[]) {
+	FILE* fiSet;
+
+	fopen_s(&fiSet, file, "r");
+	if (fiSet == NULL) {
+		printf("Error opening of file!");
+	} else {
+		char line[200];
+		int iMovement;
+		int iTotalColumn;
+		int iColumn = 0;
+		int nbLines = 0;
+		double totalAverages = 0;
+		double totalValues = 0;
+		double totalColumns[NB_DATA];
+		double totalColumnsSquare[NB_DATA];
+		char movements[NB_CLASSES][LG_MOVEMENT] = { "downstairs", "jogging", "sitDown", "standUp", "upstairs", "walking" };
+
+		fgets(line, sizeof(line), fiSet);	// Ne pas prendre en compte la première ligne
+		while (fgets(line, sizeof(line), fiSet)) {
+			iMovement = 0;
+			iColumn = 3;
+
+			if (iMovement < NB_CLASSES && line[0] != movements[iMovement]) {
+				iTotalColumn = 0;
+				while (iTotalColumn < NB_DATA) {
+					model[iMovement].averages[iTotalColumn] += (totalColumns[iTotalColumn] / nbLines) * 100;
+					totalAverages += model[iMovement].averages[iTotalColumn];
+					model[iMovement].standardDeviation[iTotalColumn] = sqrt((totalColumnsSquare[iTotalColumn]/nbLines)
+																		- pow(model[iMovement].averages[iTotalColumn], 2));
+
+					iTotalColumn++;
+				}
+				model[iMovement].average = totalValues / (nbLines * NB_DATA);
+
+				totalValues = 0;
+				iMovement++;
+			} else {
+				iTotalColumn = 0;
+				while (iTotalColumn < NB_DATA) {
+					totalColumns[iTotalColumn] += line[iColumn];
+					totalColumnsSquare[iTotalColumn] += pow(line[iColumn], 2);
+					totalValues += line[iColumn];
+
+					iTotalColumn++;
+					iColumn++;
+				}
+				iTotalColumn = 0;
+			}
+		}
+
+		fclose(&fiSet);
 	}
 }

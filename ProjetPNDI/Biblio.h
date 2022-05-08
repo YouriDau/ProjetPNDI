@@ -7,7 +7,42 @@
 #include <math.h>
 
 #define NB_CLASSES 6
+#define NB_FOLDERS_MAX 15
+#define NB_FILES_TEST 3
+#define NB_SUBJECTS 24
+#define NB_DATA 600
 
+#define LG_PATHS 20
+#define LG_MOVEMENT 11
+#define LG_FOLER_TYPE 13
+
+// PHASE 1
+typedef struct person Person;
+struct person {
+	int code;
+	int weight;
+	int height;
+	int age;
+	int gender; // 0 femme | 1 homme
+};
+
+typedef struct fileSet FileSet;
+struct fileSet {
+	char type[LG_FOLER_TYPE]; // Train, Test
+	char movement[LG_MOVEMENT];
+	int gender;
+	int index;
+	double vacc;
+};
+
+typedef struct data Data;
+struct data {
+	double x;
+	double y;
+	double z;
+};
+
+// PHASE 2
 typedef struct stats Stats;
 struct stats {
 	int iClass;
@@ -15,6 +50,16 @@ struct stats {
 	int nbTotal;
 };
 
+// PHASE 3
+typedef struct model Model;
+struct model {
+	char movement[NB_CLASSES];
+	double average;
+	double averages[NB_DATA];
+	double standardDeviation[NB_DATA];
+};
+
+// PHASE 2
 void displayResultsByClass(int realClasses[], int estimatedClasses[], int nbTests) {
 	Stats statsClasses[NB_CLASSES];
 	double percentage;
@@ -52,7 +97,6 @@ void displayResultsByClass(int realClasses[], int estimatedClasses[], int nbTest
 	printf("\n");
 }
 
-
 void displayAccuracy(int realClasses[], int estimatedClasses[], int nbTests) {
 	int nbCorrects = 0;
 	double accuracy;
@@ -67,7 +111,6 @@ void displayAccuracy(int realClasses[], int estimatedClasses[], int nbTests) {
 
 	printf("The accuracy is %.2lf %%\n\n", accuracy);
 }
-
 
 void displayConfusionMatrix(int realClasses[], int estimatedClasses[], int nbTests) {
 	int matrix[NB_CLASSES][NB_CLASSES];
