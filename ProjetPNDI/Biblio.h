@@ -13,7 +13,7 @@
 #define NB_DATA 600
 
 #define LG_PATHS 20
-#define LG_MOVEMENT 11
+#define LG_MOVEMENT 13
 #define LG_FOLER_TYPE 13
 
 char MOVEMENTS[NB_CLASSES][LG_MOVEMENT] = { "downstairs", "jogging", "sitDown", "standUp", "upstairs", "walking" };
@@ -55,7 +55,7 @@ struct stats {
 // PHASE 3
 typedef struct model Model;
 struct model {
-	char movement[NB_CLASSES];
+	char movement[LG_MOVEMENT];
 	double average;
 	double averages[NB_DATA];
 	double standardDeviation[NB_DATA];
